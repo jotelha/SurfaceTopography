@@ -48,6 +48,7 @@ from SurfaceTopography import (Topography, UniformLineScan, NonuniformLineScan,
                                read_topography)
 from SurfaceTopography.Generation import fourier_synthesis
 from SurfaceTopography.Support.UnitConversion import get_unit_conversion_factor
+from SurfaceTopography.UniformLineScanAndTopography import CompoundTopography, StaticallyScaledUniformTopography
 from SurfaceTopography.IO.Text import read_asc, read_matrix, read_xyz, AscReader
 
 pytestmark = pytest.mark.skipif(
@@ -915,3 +916,12 @@ def test_power_spectrum_from_profile():
     t = Topography(h, (8, 6))
 
     q1, C1 = t.power_spectrum_from_profile(window='hann')
+
+
+def test_compound_topography():
+    nx, ny = 128, 127
+    sx, sy = 1, 1
+    sphere1 = make_sphere(1, (nx, ny), (sx, sy))
+    sphere2 = StaticallyScaledUniformTopography(make_sphere(1, (nx, ny), (sx, sy)), -1)
+    t = CompoundTopography(sphere1, sphere2)
+    np.testing.assert_almost_equal(t.rms_height_from_area(), 0)

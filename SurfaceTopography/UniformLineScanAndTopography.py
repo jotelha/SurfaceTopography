@@ -892,7 +892,7 @@ class CompoundTopography(DecoratedUniformTopography):
         topography_a   -- first topography of the compound
         topography_b   -- second topography of the compound
         """
-        super().__init__()
+        super().__init__(topography_a)
 
         def combined_val(prop_a, prop_b, propname):
             """
