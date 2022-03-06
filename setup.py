@@ -25,12 +25,13 @@
 # SOFTWARE.
 #
 
-import glob
 from pathlib import Path
-import re
 
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
+
+import pkgconfig
+
 
 class CustomBuildExtCommand(build_ext):
     """build_ext command for use when numpy headers are needed."""
@@ -46,52 +47,25 @@ class CustomBuildExtCommand(build_ext):
         build_ext.run(self)
 
 
-#
-# Optain LAPACK configuration from numpy
-#
+extension = Extension(
+    name='_SurfaceTopography',
+    sources=['c/autocorrelation.cpp',
+             'c/bicubic.cpp',
+             'c/patchfinder.cpp',
+             'c/module.cpp'],
+    extra_compile_args=["-std=c++11"]
+)
 
-try:
-    import numpy as np
-except ImportError:
-    print("WARNING: Could not find numpy, skipping LAPACK detection.")
-    np = None
-
-lib_dirs = []
-libs = []
-extra_link_args = []
-extra_objects = []
-if np is not None:
-    print("* Using lapack_lite")
-    extra_objects += [glob.glob(np.linalg.__path__[0]+'/lapack_lite*.so')[0]]
-
-
-extra_compile_args = ["-std=c++11"]
-
-scripts = []
-
-extensions = [
-    Extension(
-        name='_SurfaceTopography',
-        sources=['c/autocorrelation.cpp',
-                 'c/bicubic.cpp',
-                 'c/patchfinder.cpp',
-                 'c/module.cpp'],
-        extra_compile_args=extra_compile_args,
-        library_dirs=lib_dirs,
-        libraries=libs,
-        extra_link_args=extra_link_args,
-        extra_objects=extra_objects
-    )
-]
+pkgconfig.configure_extension(extension, 'openblas64')
 
 setup(
     name="SurfaceTopography",
-    cmdclass={'build_ext': CustomBuildExtCommand} if np else {},
-    scripts=scripts,
+    cmdclass={'build_ext': CustomBuildExtCommand},
+    scripts=[],
     packages=find_packages(),
     package_data={'': ['ChangeLog.md']},
     include_package_data=True,
-    ext_modules=extensions,
+    ext_modules=[extension],
     # metadata for upload to PyPI
     author='Lars Pastewka',
     author_email='lars.pastewka@imtek.uni-freiburg.de',
@@ -124,5 +98,6 @@ setup(
         'requests',
         'matplotlib>=1.0.0',
         'python-dateutil',
+        'pkgconfig',
     ]
 )
